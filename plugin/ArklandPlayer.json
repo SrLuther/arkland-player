@@ -1,0 +1,9 @@
+{
+  "BackendHost": "seuservidor.com",
+  "BackendPort": 5000,
+  "BackendPath": "",
+  "ServerApiKey": "troque-por-uma-chave-de-servidor-forte",
+  "ServerName": "ARKLAND Server",
+  "MapName": "TheIsland",
+  "AllowedGroups": ["admin", "mod", "vip", "player"]
+}

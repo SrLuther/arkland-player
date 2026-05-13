@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+*.egg-info/
+
+# Ambiente do backend
+backend/.env
+backend/dist/
+backend/build/
+
+# Desktop build
+desktop/dist/
+desktop/build/
+desktop/*.spec
+
+# C++ builds
+plugin/x64/
+plugin/Debug/
+plugin/Release/
+plugin/*.obj
+plugin/*.pdb
+plugin/*.exp
+plugin/*.lib
+plugin/*.dll
+plugin/.vs/
+
+# nlohmann/json (baixe separado)
+plugin/thirdparty/
+
+# IDE
+.vs/
+*.suo
+*.user
+.vscode/settings.json
+
+# OS
+Thumbs.db
+.DS_Store
