@@ -5,13 +5,26 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.0.11] — 2026-05-24
+
+### Corrigido
+
+- Login dev não depende mais do banco SQLite — valida diretamente contra
+  as credenciais fixas do código, eliminando falha por hash desatualizado
+  no `dev_data.db`
+
+---
+
 ## [1.0.10] — 2026-05-24
 
 ### Corrigido
 
 - Login dev: campo de URL do backend adicionado ao painel de acesso dev
-- Credenciais do usuário dev (`dev` / `AKLserverDEV@`) agora são fixas no código — não dependem do `.env`
-- Backend sincroniza automaticamente o hash da senha do dev a cada reinicialização, corrigindo logins que paravam de funcionar após mudança de configuração
+- Credenciais do usuário dev (`dev` / `AKLserverDEV@`) agora são fixas
+  no código — não dependem do `.env`
+- Backend sincroniza automaticamente o hash da senha do dev a cada
+  reinicialização, corrigindo logins que paravam de funcionar após
+  mudança de configuração
 
 ---
 
