@@ -131,7 +131,7 @@ class App:
         card = ctk.CTkFrame(frame, fg_color=_BG_CARD, corner_radius=16)
         card.grid(row=0, column=0)
         card.grid_propagate(False)
-        card.configure(width=380, height=520)
+        card.configure(width=380, height=580)
 
         # Logo
         if self._logo_lg:
@@ -162,24 +162,33 @@ class App:
         ).place(x=10, y=54)
 
         # ── Painel Dev (oculto por padrão) ──
-        self._dev_panel = ctk.CTkFrame(card, fg_color="transparent", width=320, height=160)
+        self._dev_panel = ctk.CTkFrame(card, fg_color="transparent", width=320, height=210)
         self._dev_panel.grid_propagate(False)
 
-        ctk.CTkLabel(self._dev_panel, text="Usuário Dev", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=0)
+        ctk.CTkLabel(self._dev_panel, text="URL do Backend", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=0)
+        self._dev_url_entry = ctk.CTkEntry(
+            self._dev_panel, width=300, height=34,
+            fg_color=_BG_INPUT, border_color="#444466", corner_radius=8,
+            font=_FONT, text_color=_TEXT,
+        )
+        self._dev_url_entry.place(x=10, y=18)
+        self._dev_url_entry.insert(0, self._cfg.config.backend_url)
+
+        ctk.CTkLabel(self._dev_panel, text="Usuário Dev", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=62)
         self._dev_user_entry = ctk.CTkEntry(
             self._dev_panel, width=300, height=34,
             fg_color=_BG_INPUT, border_color=_GREEN, corner_radius=8,
             font=_FONT, text_color=_TEXT,
         )
-        self._dev_user_entry.place(x=10, y=18)
+        self._dev_user_entry.place(x=10, y=80)
 
-        ctk.CTkLabel(self._dev_panel, text="Senha", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=62)
+        ctk.CTkLabel(self._dev_panel, text="Senha", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=124)
         self._dev_pass_entry = ctk.CTkEntry(
             self._dev_panel, width=300, height=34,
             fg_color=_BG_INPUT, border_color=_GREEN, corner_radius=8,
             font=_FONT, text_color=_TEXT, show="●",
         )
-        self._dev_pass_entry.place(x=10, y=80)
+        self._dev_pass_entry.place(x=10, y=142)
 
         self._dev_login_btn = ctk.CTkButton(
             self._dev_panel, text="Entrar como Dev", width=300, height=42,
@@ -187,7 +196,7 @@ class App:
             font=("Segoe UI", 12, "bold"), corner_radius=10,
             command=self._on_dev_login,
         )
-        self._dev_login_btn.place(x=10, y=118)
+        self._dev_login_btn.place(x=10, y=182)
 
         # Status
         self._login_status = ctk.CTkLabel(card, text="", font=_FONT_SM, text_color=_TEXT_DIM)
@@ -1294,10 +1303,13 @@ class App:
     def _on_dev_login(self) -> None:
         username = self._dev_user_entry.get().strip()
         password = self._dev_pass_entry.get()
-        url      = self._cfg.config.backend_url
+        url      = self._dev_url_entry.get().strip() or self._cfg.config.backend_url
         if not username or not password:
             self._login_status.configure(text="Preencha usuário e senha.", text_color="#ff6b6b")
             return
+        # salva URL imediatamente
+        self._cfg.config.backend_url = url
+        self._cfg.save()
         self._login_status.configure(text="Autenticando...", text_color=_TEXT_DIM)
         self._dev_login_btn.configure(state="disabled")
         api = ApiClient(url)
