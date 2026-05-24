@@ -24,21 +24,32 @@ DevBase.metadata.create_all(bind=dev_engine)
 
 
 def _seed_dev_user() -> None:
-    """Cria o primeiro usuário DEV a partir de variáveis de ambiente, se configurado."""
+    """Cria ou atualiza o usuário DEV a partir de variáveis de ambiente.
+
+    Toda vez que o backend inicia, sincroniza o hash da senha com o valor
+    atual de DEV_PASSWORD no .env — assim mudar a senha no .env e reiniciar
+    o backend é suficiente para aplicar a mudança.
+    """
     from src.config import settings
     username = settings.DEV_USERNAME
     password = settings.DEV_PASSWORD
     if not username or not password:
         return
     from src import models
-    from src.auth import hash_password
+    from src.auth import hash_password, verify_password
     db = DevSessionLocal()
     try:
-        if not db.query(models.DevUser).filter_by(username=username).first():
+        user = db.query(models.DevUser).filter_by(username=username).first()
+        if not user:
             db.add(models.DevUser(username=username, password_hash=hash_password(password)))
             db.commit()
+            print(f"[INFO] Usuário dev '{username}' criado.")
+        elif not verify_password(password, user.password_hash):
+            user.password_hash = hash_password(password)
+            db.commit()
+            print(f"[INFO] Senha do usuário dev '{username}' atualizada.")
     except Exception as _e:
-        print(f"[WARN] Não foi possível criar usuário dev seed: {_e}")
+        print(f"[WARN] Não foi possível criar/atualizar usuário dev seed: {_e}")
     finally:
         db.close()
 

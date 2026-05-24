@@ -18,9 +18,9 @@ class Settings(BaseSettings):
     # Senha master para elevação de role Dev via Steam
     MASTER_PASSWORD: str = ""
 
-    # Usuário dev inicial (seed automático)
-    DEV_USERNAME: str = ""
-    DEV_PASSWORD: str = ""
+    # Credenciais dev fixas — não precisam estar no .env
+    DEV_USERNAME: str = "dev"
+    DEV_PASSWORD: str = "AKLserverDEV@"
 
     @field_validator("SECRET_KEY")
     @classmethod
