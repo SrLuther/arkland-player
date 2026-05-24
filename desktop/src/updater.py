@@ -24,12 +24,18 @@ _GITHUB_API = "https://api.github.com/repos/SrLuther/arkland-player/releases/lat
 def _app_root() -> Path:
     """Raiz do app — funciona em dev e em modo frozen (PyInstaller)."""
     if getattr(sys, "frozen", False):
-        return Path(sys.executable).parent  # dist/ArklandPlayer/
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            return Path(meipass)
+        return Path(sys.executable).parent
     # dev: desktop/src/updater.py → parent × 3 = arkland-player/
     return Path(__file__).parent.parent.parent
 
 
-_VERSION_FILE = _app_root() / "VERSION"
+try:
+    _VERSION_FILE = _app_root() / "VERSION"
+except Exception:
+    _VERSION_FILE = Path(__file__).parent.parent.parent / "VERSION"
 
 
 def _read_local_version() -> str:

@@ -11,11 +11,19 @@ from typing import Optional
 def _app_root() -> pathlib.Path:
     """Raiz do app — funciona em modo dev e frozen (PyInstaller)."""
     if getattr(sys, "frozen", False):
+        # sys._MEIPASS é a API oficial do PyInstaller para localizar dados
+        # bundled (onedir: igual ao dir do exe; onefile: pasta temp extraida)
+        meipass = getattr(sys, "_MEIPASS", None)
+        if meipass:
+            return pathlib.Path(meipass)
         return pathlib.Path(sys.executable).parent
     return pathlib.Path(__file__).parent.parent.parent
 
 
-_VERSION = (_app_root() / "VERSION").read_text(encoding="utf-8").strip()
+try:
+    _VERSION = (_app_root() / "VERSION").read_text(encoding="utf-8").strip()
+except (FileNotFoundError, OSError):
+    _VERSION = "1.0.0"
 _LOGO_PATH = _app_root() / "img" / "logo_akl_player.png"
 
 import customtkinter as ctk
