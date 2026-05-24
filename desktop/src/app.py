@@ -1,4 +1,5 @@
 import re
+import sys
 import pathlib
 import threading
 import tkinter as tk
@@ -6,11 +7,16 @@ from tkinter import ttk
 from datetime import datetime
 from typing import Optional
 
-_VERSION = (
-    pathlib.Path(__file__).parent.parent.parent / "VERSION"
-).read_text().strip()
 
-_LOGO_PATH = pathlib.Path(__file__).parent.parent.parent / "img" / "logo_akl_player.png"
+def _app_root() -> pathlib.Path:
+    """Raiz do app — funciona em modo dev e frozen (PyInstaller)."""
+    if getattr(sys, "frozen", False):
+        return pathlib.Path(sys.executable).parent
+    return pathlib.Path(__file__).parent.parent.parent
+
+
+_VERSION = (_app_root() / "VERSION").read_text(encoding="utf-8").strip()
+_LOGO_PATH = _app_root() / "img" / "logo_akl_player.png"
 
 import customtkinter as ctk
 
@@ -1219,7 +1225,7 @@ class App:
         if not mb.askyesno("Atualizar ARKLAND Player", msg):
             return
         try:
-            self._update_checker.launch_updater()
+            self._update_checker.launch_updater(self._update_info)
         except Exception as exc:
             mb.showerror("Erro", f"Não foi possível iniciar o agente de atualização:\n{exc}")
             return

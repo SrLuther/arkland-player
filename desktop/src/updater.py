@@ -20,9 +20,16 @@ from urllib.parse import urlparse
 
 _GITHUB_API = "https://api.github.com/repos/SrLuther/arkland-player/releases/latest"
 
-# Localiza o VERSION a partir do diretório do projeto
-_PROJECT_ROOT = Path(__file__).parent.parent.parent  # arkland-player/
-_VERSION_FILE = _PROJECT_ROOT / "VERSION"
+
+def _app_root() -> Path:
+    """Raiz do app — funciona em dev e em modo frozen (PyInstaller)."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent  # dist/ArklandPlayer/
+    # dev: desktop/src/updater.py → parent × 3 = arkland-player/
+    return Path(__file__).parent.parent.parent
+
+
+_VERSION_FILE = _app_root() / "VERSION"
 
 
 def _read_local_version() -> str:
@@ -41,9 +48,10 @@ def _parse_version(v: str) -> tuple:
 
 @dataclass
 class UpdateInfo:
-    version: str          # ex: "1.2.3"
-    tag: str              # ex: "v1.2.3"
-    changelog: str        # corpo da release note
+    version: str               # ex: "1.2.3"
+    tag: str                   # ex: "v1.2.3"
+    changelog: str             # corpo da release note
+    zip_url: Optional[str] = None  # URL do asset .zip (modo exe)
 
     def is_newer_than(self, current: str) -> bool:
         return _parse_version(self.version) > _parse_version(current)
@@ -111,28 +119,49 @@ class UpdateChecker:
         tag = str(data.get("tag_name", ""))
         version = tag.lstrip("v") or str(data.get("name", ""))
         changelog = str(data.get("body", ""))
-        return UpdateInfo(version=version, tag=tag, changelog=changelog)
+        # Procura um asset .zip na release (para update de exe distribuído)
+        assets = data.get("assets", [])
+        zip_url: Optional[str] = None
+        for asset in assets:
+            name = str(asset.get("name", "")).lower()
+            if name.endswith(".zip"):
+                zip_url = str(asset.get("browser_download_url", ""))
+                break
+        return UpdateInfo(version=version, tag=tag, changelog=changelog, zip_url=zip_url)
 
-    def launch_updater(self) -> None:
+    def launch_updater(self, update_info: Optional["UpdateInfo"] = None) -> None:
         """Lança o agente de atualização e fecha o app principal."""
-        import os
+        import os, shutil
 
         pid = os.getpid()
-        # Localiza o desktop/ como diretório do projeto do desktop
-        app_dir = Path(__file__).parent.parent   # arkland-player/desktop/
-        script = str(app_dir / "main.py")
-        agent = app_dir / "updater_agent.py"
+        root = _app_root()
+        frozen = getattr(sys, "frozen", False)
 
-        if not agent.exists():
-            raise FileNotFoundError(f"updater_agent.py não encontrado em {agent}")
-
-        # Usa uv se disponível, senão sys.executable
-        import shutil
-        uv = shutil.which("uv")
-        if uv:
-            cmd = [uv, "run", str(agent), "--pid", str(pid), "--app-dir", str(_PROJECT_ROOT), "--script", script]
+        if frozen:
+            # Modo exe: agente é updater_agent.exe ao lado do exe principal
+            agent_exe = Path(sys.executable).parent / "updater_agent.exe"
+            if not agent_exe.exists():
+                raise FileNotFoundError(f"updater_agent.exe não encontrado em {agent_exe}")
+            cmd = [
+                str(agent_exe),
+                "--pid", str(pid),
+                "--app-dir", str(root),
+                "--script", str(Path(sys.executable)),
+            ]
+            if update_info and update_info.zip_url:
+                cmd += ["--zip-url", update_info.zip_url]
         else:
-            cmd = [sys.executable, str(agent), "--pid", str(pid), "--app-dir", str(_PROJECT_ROOT), "--script", script]
+            # Modo dev: agente é updater_agent.py no desktop/
+            app_dir = Path(__file__).parent.parent  # arkland-player/desktop/
+            script = str(app_dir / "main.py")
+            agent = app_dir / "updater_agent.py"
+            if not agent.exists():
+                raise FileNotFoundError(f"updater_agent.py não encontrado em {agent}")
+            uv = shutil.which("uv")
+            if uv:
+                cmd = [uv, "run", str(agent), "--pid", str(pid), "--app-dir", str(root), "--script", script]
+            else:
+                cmd = [sys.executable, str(agent), "--pid", str(pid), "--app-dir", str(root), "--script", script]
 
         _CREATE_BREAKAWAY_FROM_JOB = 0x01000000
         flags = (

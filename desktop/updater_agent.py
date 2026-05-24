@@ -40,10 +40,11 @@ _TEXT    = "#e0e0f0"
 
 
 class UpdaterApp:
-    def __init__(self, pid: int, app_dir: str, script: str) -> None:
+    def __init__(self, pid: int, app_dir: str, script: str, zip_url: str = "") -> None:
         self._pid     = pid
         self._app_dir = Path(app_dir)
         self._script  = script
+        self._zip_url = zip_url  # Se preenchido: download zip (modo exe)
 
         if _CTK:
             ctk.set_appearance_mode("dark")
@@ -139,10 +140,15 @@ class UpdaterApp:
             self._set_progress(0.15)
             time.sleep(0.3)
 
-            # 3. git pull
-            self._set_status("Baixando atualização...", "git pull origin main")
-            self._set_progress(0.30)
-            self._git_pull()
+            # 3. Atualização
+            if self._zip_url:
+                self._set_status("Baixando atualização...", self._zip_url)
+                self._set_progress(0.30)
+                self._zip_update()
+            else:
+                self._set_status("Baixando atualização...", "git pull origin main")
+                self._set_progress(0.30)
+                self._git_pull()
             self._set_progress(0.80)
 
             # 4. Reiniciar app
@@ -202,6 +208,35 @@ class UpdaterApp:
             if "main.py" not in result.stdout.lower() and "python" not in result.stdout.lower():
                 break
 
+    def _zip_update(self) -> None:
+        """Modo exe: baixa o zip da release e extrai sobre o diretório instalado."""
+        import tempfile, zipfile, shutil, urllib.request
+
+        tmp = Path(tempfile.mkdtemp(prefix="arkland_upd_"))
+        zip_path = tmp / "update.zip"
+
+        # Download
+        self._set_status("Baixando...", "Aguarde")
+        urllib.request.urlretrieve(self._zip_url, zip_path)
+
+        # Extrai
+        self._set_status("Extraindo arquivos...")
+        extracted = tmp / "out"
+        with zipfile.ZipFile(zip_path, "r") as z:
+            z.extractall(extracted)
+
+        # Se tiver pasta raiz única, entra nela
+        items = list(extracted.iterdir())
+        if len(items) == 1 and items[0].is_dir():
+            extracted = items[0]
+
+        # Copia sobre o diretório do app
+        self._set_status("Instalando...")
+        shutil.copytree(str(extracted), str(self._app_dir), dirs_exist_ok=True)
+
+        # Limpeza
+        shutil.rmtree(tmp, ignore_errors=True)
+
     def _git_pull(self) -> None:
         """Atualiza o repositório local com git fetch + reset --hard."""
         import shutil
@@ -226,20 +261,23 @@ class UpdaterApp:
         )
 
     def _relaunch(self) -> None:
-        """Reinicia o app via uv run main.py."""
-        import shutil
+        """Reinicia o app: chama o .exe diretamente (frozen) ou uv run main.py (dev)."""
+        script = Path(self._script)
 
-        desktop_dir = Path(self._script).parent
-        uv = shutil.which("uv")
-
-        if uv:
-            cmd = [uv, "run", "main.py"]
+        if script.suffix.lower() == ".exe":
+            # Modo frozen: relança o próprio exe
+            cmd = [str(script)]
+            cwd = str(script.parent)
         else:
-            cmd = [sys.executable, "main.py"]
+            # Modo dev: uv run main.py ou python main.py
+            import shutil
+            uv = shutil.which("uv")
+            cmd = [uv, "run", "main.py"] if uv else [sys.executable, "main.py"]
+            cwd = str(script.parent)
 
         subprocess.Popen(
             cmd,
-            cwd=str(desktop_dir),
+            cwd=cwd,
             creationflags=(
                 subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
             ) if sys.platform == "win32" else 0,
@@ -255,14 +293,16 @@ class UpdaterApp:
 def main() -> None:
     parser = argparse.ArgumentParser(description="ARKLAND Player Updater Agent")
     parser.add_argument("--pid",     required=True,  type=int, help="PID do app principal")
-    parser.add_argument("--app-dir", required=True,  help="Raiz do repositório (onde fica .git)")
-    parser.add_argument("--script",  required=True,  help="Caminho para desktop/main.py")
+    parser.add_argument("--app-dir", required=True,  help="Diretório de instalação do app")
+    parser.add_argument("--script",  required=True,  help="Caminho para desktop/main.py ou ArklandPlayer.exe")
+    parser.add_argument("--zip-url", default="",     help="URL do .zip da release (modo exe)")
     args = parser.parse_args()
 
     agent = UpdaterApp(
         pid=args.pid,
         app_dir=args.app_dir,
         script=args.script,
+        zip_url=args.zip_url,
     )
     agent.run()
 
