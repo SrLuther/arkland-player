@@ -110,10 +110,17 @@ class _DevLoginRequest(BaseModel):
 
 @router.post("/dev/login")
 def dev_login(body: _DevLoginRequest, request: Request, dev_db: Session = Depends(get_dev_db)):
-    """Login para usuários DEV com username/senha — usa SQLite local, independente do MySQL."""
-    dev_user = dev_db.query(models.DevUser).filter_by(username=body.username).first()
+    """Login para usuários DEV — valida contra credenciais fixas no código, sem depender do banco."""
+    from src.config import settings as _s
     ip = request.client.host if request.client else None
-    if not dev_user or not auth_utils.verify_password(body.password, dev_user.password_hash):
+
+    # Valida contra as credenciais fixas (fonte primária, sempre confiável)
+    credentials_ok = (
+        body.username == _s.DEV_USERNAME
+        and body.password == _s.DEV_PASSWORD
+    )
+
+    if not credentials_ok:
         dev_db.add(models.AuditLog(
             event_type="dev_login_fail",
             identifier=body.username,
@@ -121,6 +128,7 @@ def dev_login(body: _DevLoginRequest, request: Request, dev_db: Session = Depend
         ))
         dev_db.commit()
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
+
     token = auth_utils.create_jwt(body.username, "dev")
     dev_db.add(models.AuditLog(
         event_type="dev_login",
