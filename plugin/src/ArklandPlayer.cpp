@@ -27,7 +27,8 @@ void Plugin::Init()
     ArkApi::GetCommands().AddChatCommand("/u",   &CommandUpload);
     ArkApi::GetCommands().AddChatCommand("/dow",  &CommandDownload);
 
-    Log::GetLog()->info("[ArklandPlayer] Plugin carregado. Servidor: {} | Backend: {}:{}",
+    Log::GetLog()->info("[ArklandPlayer] v{} carregado. Servidor: {} | Backend: {}:{}",
+        ARKLAND_VERSION,
         Config.server_name,
         std::string(Config.backend_host.begin(), Config.backend_host.end()),
         Config.backend_port);

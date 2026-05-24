@@ -15,6 +15,13 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: List[str] = ["http://localhost"]
 
+    # Senha master para elevação de role Dev via Steam
+    MASTER_PASSWORD: str = ""
+
+    # Usuário dev inicial (seed automático)
+    DEV_USERNAME: str = ""
+    DEV_PASSWORD: str = ""
+
     @field_validator("SECRET_KEY")
     @classmethod
     def secret_key_min_length(cls, v: str) -> str:
@@ -32,4 +39,4 @@ class Settings(BaseSettings):
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]

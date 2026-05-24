@@ -19,6 +19,7 @@ class _CallbackHandler(BaseHTTPRequestHandler):
         jwt   = params.get("jwt",          [""])[0]
         sid   = params.get("steam_id",     [""])[0]
         name  = params.get("persona_name", [""])[0]
+        role  = params.get("role",         ["player"])[0]
 
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -31,7 +32,7 @@ class _CallbackHandler(BaseHTTPRequestHandler):
         self.wfile.write(html)
 
         if _CallbackHandler.callback and jwt:
-            _CallbackHandler.callback(jwt, sid, urllib.parse.unquote(name))
+            _CallbackHandler.callback(jwt, sid, urllib.parse.unquote(name), role)
 
     def log_message(self, *args):
         pass  # silencia logs do servidor HTTP local
@@ -39,11 +40,11 @@ class _CallbackHandler(BaseHTTPRequestHandler):
 
 def start_steam_login(
     backend_url: str,
-    on_success: Callable[[str, str, str], None],
+    on_success: Callable[[str, str, str, str], None],
 ) -> None:
     """
     Abre o navegador para o login Steam e aguarda o callback numa thread.
-    `on_success(jwt, steam_id, persona_name)` é chamado na thread do servidor.
+    `on_success(jwt, steam_id, persona_name, role)` é chamado na thread do servidor.
     """
     _CallbackHandler.callback = on_success
 

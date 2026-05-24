@@ -1,0 +1,32 @@
+# --- Core do Discord ---
+discord.py==2.6.4
+aiohttp>=3.9.0
+
+# --- Requests e Web ---
+requests==2.31.0
+beautifulsoup4==4.12.3
+
+# --- Ambiente / Utilidades ---
+python-dotenv==1.0.0
+pytz==2024.1
+
+# --- Servidor Keep-Alive ---
+flask==3.0.3
+
+# --- Música (voz) ---
+yt-dlp
+PyNaCl
+
+# --- ARK: Survival Evolved RCON ---
+rcon
+
+# --- ARK: Steam Query (A2S) ---
+python-a2s>=1.3.0
+
+# --- TikTok Monitor (API não-oficial via WebSocket) ---
+TikTokLive>=6.0.0
+
+# --- Otimizações (opcionais, mas muito úteis) ---
+ujson==5.10.0
+ruff==0.14.7
+aiofiles==24.1.0

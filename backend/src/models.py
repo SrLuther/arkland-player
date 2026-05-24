@@ -7,6 +7,16 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from src.database import Base
+from src.dev_database import DevBase
+
+
+class DevUser(DevBase):
+    __tablename__ = "dev_users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(100), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class Player(Base):
@@ -54,3 +64,24 @@ class InventoryItem(Base):
     slot_index = Column(Integer, default=-1)
 
     snapshot = relationship("InventorySnapshot", back_populates="items")
+
+
+class AuditLog(DevBase):
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    event_type = Column(String(50), nullable=False)
+    identifier = Column(String(255))
+    ip_address = Column(String(45))
+    role_assigned = Column(String(50))
+    details = Column(Text)
+
+
+class SystemConfig(DevBase):
+    __tablename__ = "system_config"
+
+    id = Column(Integer, primary_key=True)
+    key = Column(String(100), unique=True, nullable=False, index=True)
+    value = Column(Text, nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

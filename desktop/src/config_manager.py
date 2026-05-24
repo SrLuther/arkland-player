@@ -10,6 +10,8 @@ class PlayerConfig:
     jwt_token: str = ""
     steam_id: str = ""
     persona_name: str = ""
+    role: str = "player"       # "player" | "admin" | "dev"
+    display_name: str = ""    # persona_name (Steam) ou username (Dev)
 
 
 class ConfigManager:
@@ -37,4 +39,6 @@ class ConfigManager:
         self.config.jwt_token = ""
         self.config.steam_id = ""
         self.config.persona_name = ""
+        self.config.role = "player"
+        self.config.display_name = ""
         self.save()

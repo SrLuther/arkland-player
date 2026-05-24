@@ -1,3 +1,5 @@
+import bcrypt as _bcrypt
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -17,27 +19,74 @@ STEAM_ID_PREFIX = "https://steamcommunity.com/openid/id/"
 _bearer = HTTPBearer()
 
 
-def create_jwt(steam_id: str) -> str:
+# ─── Senha ────────────────────────────────────────────────────────────────────
+
+def hash_password(password: str) -> str:
+    return _bcrypt.hashpw(password.encode(), _bcrypt.gensalt()).decode()
+
+
+def verify_password(plain: str, hashed: str) -> bool:
+    try:
+        return _bcrypt.checkpw(plain.encode(), hashed.encode())
+    except Exception:
+        return False
+
+
+# ─── JWT ──────────────────────────────────────────────────────────────────────
+
+def create_jwt(sub: str, role: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
     return jwt.encode(
-        {"sub": steam_id, "exp": expire},
+        {"sub": sub, "role": role, "exp": expire},
         settings.SECRET_KEY,
         algorithm=settings.JWT_ALGORITHM,
     )
 
 
-def _decode_jwt(token: str) -> str:
+@dataclass
+class CurrentUser:
+    sub: str
+    role: str  # "player" | "admin" | "dev"
+
+
+def _decode_jwt(token: str) -> CurrentUser:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-        steam_id: Optional[str] = payload.get("sub")
-        if not steam_id:
+        sub: Optional[str] = payload.get("sub")
+        # compatibilidade com tokens antigos sem campo role
+        role: str = payload.get("role", "player")
+        if not sub:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
-        return steam_id
+        return CurrentUser(sub=sub, role=role)
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido ou expirado",
         )
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+) -> CurrentUser:
+    return _decode_jwt(credentials.credentials)
+
+
+def require_role(*roles: str):
+    """Dependência que restringe acesso a determinados roles."""
+    def _dep(current: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+        if current.role not in roles:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso negado")
+        return current
+    return _dep
+
+
+_DEFAULT_ADMIN_GROUPS: frozenset[str] = frozenset({"admin", "mod", "owner"})
+
+
+def steam_role(permission_group: str, admin_groups: Optional[frozenset[str]] = None) -> str:
+    """Mapeia permission_group do servidor para role JWT."""
+    groups = admin_groups if admin_groups is not None else _DEFAULT_ADMIN_GROUPS
+    return "admin" if permission_group in groups else "player"
 
 
 async def verify_steam_openid(params: dict) -> Optional[str]:
@@ -86,11 +135,12 @@ def get_or_create_player(
 
 
 def get_current_player(
-    credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+    current: CurrentUser = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> models.Player:
-    steam_id = _decode_jwt(credentials.credentials)
-    player = db.query(models.Player).filter_by(steam_id=steam_id).first()
+    if current.role not in ("player", "admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso negado")
+    player = db.query(models.Player).filter_by(steam_id=current.sub).first()
     if not player:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Jogador não encontrado")
     return player

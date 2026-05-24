@@ -4,6 +4,8 @@
 //  Plugin para ARK: Survival Evolved (ArkServerApi)
 //  Comandos: /u (upload inventário) | /dow (download inventário)
 // ============================================================
+
+#define ARKLAND_VERSION "1.0.0"
 #include <API/ARK/Ark.h>
 #include <ArkApi/PluginManager.h>
 #include <Permissions.h>   // ArkServerApi PermissionsManager plugin
