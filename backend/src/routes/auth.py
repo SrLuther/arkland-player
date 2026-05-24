@@ -111,13 +111,13 @@ class _DevLoginRequest(BaseModel):
 @router.post("/dev/login")
 def dev_login(body: _DevLoginRequest, request: Request, dev_db: Session = Depends(get_dev_db)):
     """Login para usuários DEV — valida contra credenciais fixas no código, sem depender do banco."""
-    from src.config import settings as _s
+    from src.config import DEV_USERNAME, DEV_PASSWORD
     ip = request.client.host if request.client else None
 
-    # Valida contra as credenciais fixas (fonte primária, sempre confiável)
+    # Valida contra as credenciais fixas (constantes de módulo, nunca sobrescritas pelo .env)
     credentials_ok = (
-        body.username == _s.DEV_USERNAME
-        and body.password == _s.DEV_PASSWORD
+        body.username == DEV_USERNAME
+        and body.password == DEV_PASSWORD
     )
 
     if not credentials_ok:

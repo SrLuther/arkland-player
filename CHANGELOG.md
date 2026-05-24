@@ -5,6 +5,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.0.12] — 2026-05-24
+
+### Corrigido
+
+- Credenciais dev (`DEV_USERNAME`/`DEV_PASSWORD`) removidas do `BaseSettings` —
+  eram sobrescritas pelo `.env`, causando "Credenciais inválidas" mesmo com
+  as credenciais corretas. Agora são constantes de módulo imutáveis.
+
+---
+
 ## [1.0.11] — 2026-05-24
 
 ### Corrigido
