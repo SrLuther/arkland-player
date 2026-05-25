@@ -1306,7 +1306,7 @@ class App:
             self._update_banner.pack_forget()
             self._sidebar_update_lbl.configure(text="")
 
-        def _do_update(self) -> None:
+    def _do_update(self) -> None:
         if not self._update_info:
             return
         import tkinter.messagebox as mb

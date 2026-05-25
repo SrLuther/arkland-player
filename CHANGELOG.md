@@ -5,6 +5,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.0.16] — 2026-05-24
+
+### Corrigido
+- IndentationError em `app.py` que impedia o app de iniciar após build (método `_do_update` com indentação errada)
+
+---
+
 ## [1.0.15] — 2026-05-24
 
 ### Adicionado

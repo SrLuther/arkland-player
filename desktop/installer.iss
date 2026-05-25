@@ -1,5 +1,5 @@
 #define AppName      "Arkland Player"
-#define AppVersion   "1.0.15"
+#define AppVersion   "1.0.16"
 #define AppPublisher "Arkland"
 #define AppExeName   "ArklandPlayer.exe"
 #define SourceDir    SourcePath + "\dist\ArklandPlayer"
