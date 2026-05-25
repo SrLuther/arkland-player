@@ -5,6 +5,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.0.13] — 2026-05-24
+
+### Corrigido
+
+- Login dev: erro de conexão com o backend agora mostra mensagem
+  correta ("Sem conexão com o backend. Verifique a URL.") em vez
+  de "Credenciais inválidas" — facilitando diagnóstico
+
+---
+
 ## [1.0.12] — 2026-05-24
 
 ### Corrigido

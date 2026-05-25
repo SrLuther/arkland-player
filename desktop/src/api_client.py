@@ -50,8 +50,8 @@ class ApiClient:
         except Exception:
             return False
 
-    def dev_login(self, username: str, password: str) -> Optional[dict]:
-        """Retorna {access_token, role, username} ou None em caso de falha."""
+    def dev_login(self, username: str, password: str) -> "tuple[Optional[dict], str]":
+        """Retorna (data, erro). data é dict em sucesso, None em falha. erro é string vazia em sucesso."""
         try:
             r = requests.post(
                 f"{self.base_url}/auth/dev/login",
@@ -59,10 +59,16 @@ class ApiClient:
                 timeout=10,
             )
             if r.status_code == 200:
-                return r.json()
-        except Exception:
-            pass
-        return None
+                return r.json(), ""
+            if r.status_code == 401:
+                return None, "Credenciais inválidas."
+            return None, f"Erro do servidor: {r.status_code}"
+        except requests.exceptions.ConnectionError:
+            return None, "Sem conexão com o backend. Verifique a URL."
+        except requests.exceptions.Timeout:
+            return None, "Backend não respondeu (timeout)."
+        except Exception as e:
+            return None, f"Erro: {e}"
 
     def dev_elevate(self, master_password: str) -> Optional[dict]:
         """Eleva JWT Steam para role=dev validando a senha master. Retorna {access_token, role} ou None."""

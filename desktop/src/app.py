@@ -1315,7 +1315,7 @@ class App:
         api = ApiClient(url)
 
         def _do():
-            result = api.dev_login(username, password)
+            result, err = api.dev_login(username, password)
 
             def _update():
                 self._dev_login_btn.configure(state="normal")
@@ -1326,7 +1326,7 @@ class App:
                     self._cfg.save()
                     self._show_main(self._cfg.config.role)
                 else:
-                    self._login_status.configure(text="Credenciais inválidas.", text_color="#ff6b6b")
+                    self._login_status.configure(text=err, text_color="#ff6b6b")
             self._root.after(0, _update)
 
         threading.Thread(target=_do, daemon=True).start()

@@ -1,6 +1,10 @@
+import pathlib
 from typing import List
 from pydantic_settings import BaseSettings
 from pydantic import field_validator
+
+# .env sempre relativo ao diretório deste arquivo (backend/src/../.env = backend/.env)
+_ENV_FILE = pathlib.Path(__file__).parent.parent / ".env"
 
 
 class Settings(BaseSettings):
@@ -32,7 +36,7 @@ class Settings(BaseSettings):
             raise ValueError("SERVER_API_KEY deve ter pelo menos 16 caracteres")
         return v
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": str(_ENV_FILE), "env_file_encoding": "utf-8"}
 
 
 settings = Settings()  # type: ignore[call-arg]
