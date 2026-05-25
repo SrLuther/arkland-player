@@ -5,6 +5,16 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.0.18] — 2026-05-24
+### Alterado
+- Painel dev na tela de login simplificado: exibe só Usuário + Senha (sem botão de servidor, sem campo de URL)
+- Login dev inicia o servidor backend local automaticamente se não estiver rodando
+- Health-check via `127.0.0.1` (loopback) — evita bloqueio de firewall na porta LAN
+- Feedback ao vivo "Aguardando servidor... (Xs)" durante a espera (até 60s)
+- Controle de servidor/bot permanece no painel interno (aba Sistema), após login
+
+---
+
 ## [1.0.17] — 2026-05-24
 ### Corrigido
 - Label de status do login Dev sobreposto ao campo de senha (z-order/layout)
