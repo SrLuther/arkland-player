@@ -5,6 +5,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.0.14] — 2026-05-24
+
+### Corrigido
+- Auto-update agora exibe notificação de nova versão também na tela de login (não apenas pós-login)
+- Banner clicável no topo da tela de login ao detectar nova versão disponível
+
+---
+
 ## [1.0.13] — 2026-05-24
 
 ### Corrigido

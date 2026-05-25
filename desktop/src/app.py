@@ -128,6 +128,15 @@ class App:
         frame.grid_rowconfigure(0, weight=1)
         frame.grid_columnconfigure(0, weight=1)
 
+        # Banner de update (place no topo, hidden por padrão)
+        self._login_update_banner = ctk.CTkFrame(frame, fg_color="#1a3a2a", corner_radius=0, height=36)
+        self._login_update_lbl = ctk.CTkLabel(
+            self._login_update_banner, text="", font=_FONT_SM,
+            text_color=_GREEN, cursor="hand2",
+        )
+        self._login_update_lbl.pack(expand=True)
+        self._login_update_lbl.bind("<Button-1>", lambda e: self._do_update())
+
         card = ctk.CTkFrame(frame, fg_color=_BG_CARD, corner_radius=16)
         card.grid(row=0, column=0)
         card.grid_propagate(False)
@@ -1219,17 +1228,21 @@ class App:
         current = self._update_checker.current_version
         if info and info.is_newer_than(current):
             self._update_info = info
-            msg = f"🔔  Nova versão disponível: v{info.version}"
-            # Banner no dashboard
-            self._update_banner_lbl.configure(text=msg)
+            msg = f"🔔  Nova versão disponível: v{info.version} — clique para atualizar"
+            # Banner na tela de login (place no topo, largura total)
+            self._login_update_lbl.configure(text=msg)
+            self._login_update_banner.place(x=0, y=0, relwidth=1)
+            # Banner no dashboard (se já logado)
+            self._update_banner_lbl.configure(text=f"🔔  Nova versão disponível: v{info.version}")
             self._update_banner.pack(fill="x", padx=24, pady=(0, 8))
             # Label na sidebar
             self._sidebar_update_lbl.configure(text=f"🔔 v{info.version}")
         else:
+            self._login_update_banner.place_forget()
             self._update_banner.pack_forget()
             self._sidebar_update_lbl.configure(text="")
 
-    def _do_update(self) -> None:
+        def _do_update(self) -> None:
         if not self._update_info:
             return
         import tkinter.messagebox as mb
