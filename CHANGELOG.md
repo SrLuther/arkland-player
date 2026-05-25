@@ -5,6 +5,15 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.0.17] — 2026-05-24
+### Corrigido
+- Label de status do login Dev sobreposto ao campo de senha (z-order/layout)
+- `_login_status` oculto quando painel dev está ativo; `_dev_login_status` próprio dentro do painel dev
+- Bordas das entradas Usuário/Senha sem destaque verde incorreto
+- Servidor "pronto" apenas após health-check passar (evita "Sem conexão" logo após iniciar)
+
+---
+
 ## [1.0.16] — 2026-05-24
 
 ### Corrigido
