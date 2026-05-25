@@ -33,6 +33,7 @@ from src.api_client import ApiClient
 from src.config_manager import ConfigManager
 from src.breed_store import BreedStore, Dino, STAT_KEYS, STAT_LABELS, STAT_DEFAULTS
 from src.updater import UpdateChecker
+from src.server_manager import ServerManager
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
@@ -99,6 +100,7 @@ class App:
         self._current_role = "player"
         self._update_checker = UpdateChecker(on_log=lambda m: None)
         self._update_info = None  # UpdateInfo quando disponível
+        self._srv_mgr = ServerManager()
         self._build_ui()
 
     # ─── Construção da UI ─────────────────────────────────────────────────
@@ -171,33 +173,57 @@ class App:
         ).place(x=10, y=54)
 
         # ── Painel Dev (oculto por padrão) ──
-        self._dev_panel = ctk.CTkFrame(card, fg_color="transparent", width=320, height=210)
+        self._dev_panel = ctk.CTkFrame(card, fg_color="transparent", width=320, height=290)
         self._dev_panel.grid_propagate(False)
 
-        ctk.CTkLabel(self._dev_panel, text="URL do Backend", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=0)
+        # ── Bloco: Servidor Local ─────────────────────────────────────────
+        ctk.CTkLabel(
+            self._dev_panel, text="SERVIDOR LOCAL", font=("Segoe UI", 9, "bold"),
+            text_color="#555577",
+        ).place(x=10, y=0)
+
+        self._srv_btn = ctk.CTkButton(
+            self._dev_panel, text="▶  Iniciar Servidor", width=148, height=32,
+            fg_color="#1a3a2a", hover_color="#234d38",
+            font=("Segoe UI", 11, "bold"), corner_radius=8, text_color=_GREEN,
+            command=self._on_server_toggle,
+        )
+        self._srv_btn.place(x=10, y=16)
+
+        self._srv_status_lbl = ctk.CTkLabel(
+            self._dev_panel, text="● Parado",
+            font=_FONT_SM, text_color="#555577", anchor="w",
+        )
+        self._srv_status_lbl.place(x=166, y=22)
+
+        # separador
+        ctk.CTkFrame(self._dev_panel, fg_color="#333355", height=1, width=300).place(x=10, y=54)
+
+        # ── Bloco: URL do Backend ─────────────────────────────────────────
+        ctk.CTkLabel(self._dev_panel, text="URL do Backend", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=62)
         self._dev_url_entry = ctk.CTkEntry(
             self._dev_panel, width=300, height=34,
             fg_color=_BG_INPUT, border_color="#444466", corner_radius=8,
             font=_FONT, text_color=_TEXT,
         )
-        self._dev_url_entry.place(x=10, y=18)
+        self._dev_url_entry.place(x=10, y=80)
         self._dev_url_entry.insert(0, self._cfg.config.backend_url)
 
-        ctk.CTkLabel(self._dev_panel, text="Usuário Dev", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=62)
+        ctk.CTkLabel(self._dev_panel, text="Usuário Dev", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=124)
         self._dev_user_entry = ctk.CTkEntry(
             self._dev_panel, width=300, height=34,
             fg_color=_BG_INPUT, border_color=_GREEN, corner_radius=8,
             font=_FONT, text_color=_TEXT,
         )
-        self._dev_user_entry.place(x=10, y=80)
+        self._dev_user_entry.place(x=10, y=142)
 
-        ctk.CTkLabel(self._dev_panel, text="Senha", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=124)
+        ctk.CTkLabel(self._dev_panel, text="Senha", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=186)
         self._dev_pass_entry = ctk.CTkEntry(
             self._dev_panel, width=300, height=34,
             fg_color=_BG_INPUT, border_color=_GREEN, corner_radius=8,
             font=_FONT, text_color=_TEXT, show="●",
         )
-        self._dev_pass_entry.place(x=10, y=142)
+        self._dev_pass_entry.place(x=10, y=204)
 
         self._dev_login_btn = ctk.CTkButton(
             self._dev_panel, text="Entrar como Dev", width=300, height=42,
@@ -205,7 +231,7 @@ class App:
             font=("Segoe UI", 12, "bold"), corner_radius=10,
             command=self._on_dev_login,
         )
-        self._dev_login_btn.place(x=10, y=182)
+        self._dev_login_btn.place(x=10, y=244)
 
         # Status
         self._login_status = ctk.CTkLabel(card, text="", font=_FONT_SM, text_color=_TEXT_DIM)
@@ -1160,6 +1186,44 @@ class App:
             self._steam_panel.place_forget()
             self._dev_panel.place(relx=0.5, rely=0.48, anchor="n")
 
+    def _on_server_toggle(self) -> None:
+        """Inicia ou para o servidor backend local."""
+        if self._srv_mgr.is_running:
+            self._srv_mgr.stop()
+            self._srv_btn.configure(
+                text="▶  Iniciar Servidor",
+                fg_color="#1a3a2a", hover_color="#234d38", text_color=_GREEN,
+            )
+            self._srv_status_lbl.configure(text="◉ Parado", text_color="#555577")
+        else:
+            self._srv_btn.configure(state="disabled", text="Iniciando...")
+            self._login_status.configure(text="", text_color=_TEXT_DIM)
+
+            def _do():
+                ok, msg = self._srv_mgr.start()
+
+                def _update():
+                    self._srv_btn.configure(state="normal")
+                    if ok:
+                        self._srv_btn.configure(
+                            text="■  Parar Servidor",
+                            fg_color="#3a1a1a", hover_color="#5a2020", text_color="#ff6b6b",
+                        )
+                        ip = self._srv_mgr.local_ip
+                        self._srv_status_lbl.configure(
+                            text=f"◉ {ip}:{ServerManager.PORT}",
+                            text_color=_GREEN,
+                        )
+                        # Preenche o campo URL automaticamente
+                        self._dev_url_entry.delete(0, "end")
+                        self._dev_url_entry.insert(0, self._srv_mgr.url)
+                    else:
+                        self._srv_status_lbl.configure(text="◉ Erro", text_color="#ff6b6b")
+                        self._login_status.configure(text=msg, text_color="#ff6b6b")
+                self._root.after(0, _update)
+
+            threading.Thread(target=_do, daemon=True).start()
+
     # ─── Navegação ────────────────────────────────────────────────────────
 
     def _nav_select(self, idx: int) -> None:
@@ -1912,4 +1976,10 @@ class App:
             row["result"].configure(text="—")
 
     def run(self) -> None:
+        self._root.protocol("WM_DELETE_WINDOW", self._on_close)
         self._root.mainloop()
+
+    def _on_close(self) -> None:
+        """Para o servidor backend (se ativo) antes de fechar o app."""
+        self._srv_mgr.stop()
+        self._root.destroy()

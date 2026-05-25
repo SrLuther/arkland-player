@@ -5,6 +5,17 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+## [1.0.15] — 2026-05-24
+
+### Adicionado
+- Painel dev: botão **Iniciar/Parar Servidor** inicia o backend localmente
+- IP da máquina exibido no painel ao iniciar (`192.168.x.x:5000`) para outras máquinas conectarem
+- Campo URL preenchido automaticamente ao iniciar o servidor
+- Servidor encerrado automaticamente ao fechar o app
+- Backend distribuído como `ArklandPlayer-Server.exe` junto ao instalador
+
+---
+
 ## [1.0.14] — 2026-05-24
 
 ### Corrigido

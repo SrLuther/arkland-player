@@ -1,5 +1,5 @@
 #define AppName      "Arkland Player"
-#define AppVersion   "1.0.14"
+#define AppVersion   "1.0.15"
 #define AppPublisher "Arkland"
 #define AppExeName   "ArklandPlayer.exe"
 #define SourceDir    SourcePath + "\dist\ArklandPlayer"
@@ -31,9 +31,10 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-Source: "{#SourceDir}\{#AppExeName}";     DestDir: "{app}"; Flags: ignoreversion
-Source: "{#SourceDir}\updater_agent.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#SourceDir}\_internal\*";       DestDir: "{app}\_internal"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#SourceDir}\{#AppExeName}";              DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourceDir}\updater_agent.exe";           DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourceDir}\ArklandPlayer-Server.exe";   DestDir: "{app}"; Flags: ignoreversion
+Source: "{#SourceDir}\_internal\*";                DestDir: "{app}\_internal"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"; IconFilename: "{app}\_internal\img\logo_akl_player.png"
