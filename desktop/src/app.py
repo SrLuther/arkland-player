@@ -1338,6 +1338,35 @@ class App:
         api = ApiClient(_local_url)
 
         def _do():
+            import time
+            _is_local = any(h in _local_url for h in ("127.0.0.1", "localhost"))
+            # Se for local e o servidor não estiver pronto, inicia automaticamente
+            if _is_local and not api.health_check():
+                self._root.after(0, lambda: self._dev_login_status.configure(
+                    text="Iniciando servidor local...", text_color=_TEXT_DIM,
+                ))
+                ok, err_msg = self._srv_mgr.start(visible=True)
+                if not ok:
+                    def _start_err():
+                        self._dev_login_btn.configure(state="normal")
+                        self._dev_login_status.configure(text=f"Erro: {err_msg}", text_color="#ff6b6b")
+                    self._root.after(0, _start_err)
+                    return
+                # Aguarda até 15s
+                ready = False
+                for _ in range(30):
+                    time.sleep(0.5)
+                    if api.health_check():
+                        ready = True
+                        break
+                if not ready:
+                    self._srv_mgr.stop()
+                    def _timeout():
+                        self._dev_login_btn.configure(state="normal")
+                        self._dev_login_status.configure(text="Servidor não respondeu em 15s.", text_color="#ff6b6b")
+                    self._root.after(0, _timeout)
+                    return
+
             result, err = api.dev_login(username, password)
 
             def _update():

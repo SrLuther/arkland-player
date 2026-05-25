@@ -81,10 +81,11 @@ class ServerManager:
 
     # ── controle ──────────────────────────────────────────────────────────
 
-    def start(self) -> tuple[bool, str]:
+    def start(self, visible: bool = False) -> tuple[bool, str]:
         """
         Inicia o backend.
         Retorna (True, url) em caso de sucesso ou (False, mensagem_de_erro).
+        visible=True abre uma janela de console visível (Windows).
         """
         if self.is_running:
             return True, self.url
@@ -94,7 +95,10 @@ class ServerManager:
             return False, "Arquivo do servidor não encontrado."
 
         try:
-            flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+            if sys.platform == "win32":
+                flags = subprocess.CREATE_NEW_CONSOLE if visible else subprocess.CREATE_NO_WINDOW
+            else:
+                flags = 0
 
             if getattr(sys, "frozen", False):
                 # Frozen: executa ArklandPlayer-Server.exe diretamente
@@ -110,8 +114,8 @@ class ServerManager:
                 cmd,
                 cwd=cwd,
                 creationflags=flags,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stdout=None if visible else subprocess.DEVNULL,
+                stderr=None if visible else subprocess.DEVNULL,
             )
             return True, self.url
 
