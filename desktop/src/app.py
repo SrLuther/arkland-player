@@ -173,24 +173,33 @@ class App:
         ).place(x=10, y=54)
 
         # ── Painel Dev (oculto por padrão) ──
-        self._dev_panel = ctk.CTkFrame(card, fg_color="transparent", width=320, height=210)
+        self._dev_panel = ctk.CTkFrame(card, fg_color="transparent", width=320, height=272)
         self._dev_panel.grid_propagate(False)
 
-        ctk.CTkLabel(self._dev_panel, text="Usuário Dev", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=0)
+        ctk.CTkLabel(self._dev_panel, text="Servidor", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=0)
+        self._dev_url_entry = ctk.CTkEntry(
+            self._dev_panel, width=300, height=34,
+            fg_color=_BG_INPUT, border_color="#444466", corner_radius=8,
+            font=_FONT_SM, text_color=_TEXT,
+        )
+        self._dev_url_entry.insert(0, self._cfg.config.backend_url)
+        self._dev_url_entry.place(x=10, y=18)
+
+        ctk.CTkLabel(self._dev_panel, text="Usuário Dev", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=62)
         self._dev_user_entry = ctk.CTkEntry(
             self._dev_panel, width=300, height=34,
             fg_color=_BG_INPUT, border_color="#444466", corner_radius=8,
             font=_FONT, text_color=_TEXT,
         )
-        self._dev_user_entry.place(x=10, y=18)
+        self._dev_user_entry.place(x=10, y=80)
 
-        ctk.CTkLabel(self._dev_panel, text="Senha", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=62)
+        ctk.CTkLabel(self._dev_panel, text="Senha", font=_FONT_SM, text_color=_TEXT_DIM).place(x=10, y=124)
         self._dev_pass_entry = ctk.CTkEntry(
             self._dev_panel, width=300, height=34,
             fg_color=_BG_INPUT, border_color="#444466", corner_radius=8,
             font=_FONT, text_color=_TEXT, show="●",
         )
-        self._dev_pass_entry.place(x=10, y=80)
+        self._dev_pass_entry.place(x=10, y=142)
 
         self._dev_login_btn = ctk.CTkButton(
             self._dev_panel, text="Entrar como Dev", width=300, height=42,
@@ -198,13 +207,13 @@ class App:
             font=("Segoe UI", 12, "bold"), corner_radius=10,
             command=self._on_dev_login,
         )
-        self._dev_login_btn.place(x=10, y=124)
+        self._dev_login_btn.place(x=10, y=186)
 
         self._dev_login_status = ctk.CTkLabel(
             self._dev_panel, text="", font=_FONT_SM, text_color=_TEXT_DIM,
             wraplength=290,
         )
-        self._dev_login_status.place(relx=0.5, y=175, anchor="n")
+        self._dev_login_status.place(relx=0.5, y=237, anchor="n")
 
         # Status (painel steam)
         self._login_status = ctk.CTkLabel(card, text="", font=_FONT_SM, text_color=_TEXT_DIM)
@@ -1160,7 +1169,7 @@ class App:
             self._login_status.configure(text="")
             self._login_status.place_forget()
             self._steam_panel.place_forget()
-            self._dev_panel.place(relx=0.5, rely=0.48, anchor="n")
+            self._dev_panel.place(relx=0.5, rely=0.44, anchor="n")
 
 
 
@@ -1323,48 +1332,12 @@ class App:
         if not username or not password:
             self._dev_login_status.configure(text="Preencha usuário e senha.", text_color="#ff6b6b")
             return
-        self._dev_login_status.configure(text="Conectando...", text_color=_TEXT_DIM)
+        self._dev_login_status.configure(text="")
         self._dev_login_btn.configure(state="disabled")
-        _local_url = f"http://127.0.0.1:{ServerManager.PORT}"
+        _local_url = self._dev_url_entry.get().strip().rstrip("/") or f"http://127.0.0.1:{ServerManager.PORT}"
         api = ApiClient(_local_url)
 
         def _do():
-            import time
-            # Se o servidor não estiver pronto, inicia automaticamente
-            if not api.health_check():
-                self._root.after(0, lambda: self._dev_login_status.configure(
-                    text="Iniciando servidor local...", text_color=_TEXT_DIM,
-                ))
-                ok, err_msg = self._srv_mgr.start()
-                if not ok:
-                    def _start_err():
-                        self._dev_login_btn.configure(state="normal")
-                        self._dev_login_status.configure(text=f"Erro ao iniciar servidor: {err_msg}", text_color="#ff6b6b")
-                    self._root.after(0, _start_err)
-                    return
-                # Aguarda uvicorn ficar pronto (até 60s)
-                _t0 = time.time()
-                ready = False
-                for _ in range(120):
-                    _elapsed = int(time.time() - _t0)
-                    self._root.after(0, lambda e=_elapsed: self._dev_login_status.configure(
-                        text=f"Aguardando servidor... ({e}s)", text_color="#888899",
-                    ))
-                    time.sleep(0.5)
-                    if api.health_check():
-                        ready = True
-                        break
-                if not ready:
-                    self._srv_mgr.stop()
-                    def _timeout():
-                        self._dev_login_btn.configure(state="normal")
-                        self._dev_login_status.configure(
-                            text="Servidor não respondeu em 60s.", text_color="#ff6b6b",
-                        )
-                    self._root.after(0, _timeout)
-                    return
-
-            self._root.after(0, lambda: self._dev_login_status.configure(text="Autenticando...", text_color=_TEXT_DIM))
             result, err = api.dev_login(username, password)
 
             def _update():
@@ -1377,7 +1350,7 @@ class App:
                     self._cfg.save()
                     self._show_main(self._cfg.config.role)
                 else:
-                    self._dev_login_status.configure(text=err, text_color="#ff6b6b")
+                    self._dev_login_status.configure(text=err or "Servidor não disponível.", text_color="#ff6b6b")
             self._root.after(0, _update)
 
         threading.Thread(target=_do, daemon=True).start()

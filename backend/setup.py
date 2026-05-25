@@ -67,7 +67,7 @@ def main() -> None:
         print("  [AVISO] STEAM_API_KEY vazia — login Steam não funcionará.")
     steam_return = _prompt(
         "STEAM_OPENID_RETURN_URL",
-        "http://localhost:5000/auth/steam/callback",
+        "http://localhost:32444/auth/steam/callback",
     )
 
     # ── CORS ───────────────────────────────────────────────────────────────────

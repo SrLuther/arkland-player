@@ -6,7 +6,7 @@ from pathlib import Path
 
 @dataclass
 class PlayerConfig:
-    backend_url: str = "http://localhost:5000"
+    backend_url: str = "http://localhost:32444"
     jwt_token: str = ""
     steam_id: str = ""
     persona_name: str = ""

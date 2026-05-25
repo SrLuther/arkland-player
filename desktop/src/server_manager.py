@@ -60,7 +60,7 @@ def _find_uv() -> str:
 class ServerManager:
     """Ciclo de vida do processo do backend."""
 
-    PORT = 5000
+    PORT = 32444
 
     def __init__(self) -> None:
         self._proc: Optional[subprocess.Popen] = None

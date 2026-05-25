@@ -30,9 +30,9 @@ def _seed_dev_user() -> None:
     atual de DEV_PASSWORD no .env — assim mudar a senha no .env e reiniciar
     o backend é suficiente para aplicar a mudança.
     """
-    from src.config import settings
-    username = settings.DEV_USERNAME
-    password = settings.DEV_PASSWORD
+    from src.config import DEV_USERNAME, DEV_PASSWORD
+    username = DEV_USERNAME
+    password = DEV_PASSWORD
     if not username or not password:
         return
     from src import models
@@ -114,4 +114,4 @@ def health_check():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=32444, reload=False)
